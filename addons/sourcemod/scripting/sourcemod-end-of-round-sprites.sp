@@ -1,8 +1,8 @@
 #include <sourcemod>
 #include <sdktools>
 
-#define CONFIG "config/end-of-round-sprites.cfg"
-#define VERSION "0.1.0"
+#define CONFIG "configs/end-of-round-sprites.cfg"
+#define VERSION "0.1.1"
 
 new bool:g_bRoundEnded = false;
 new Handle:g_hSprites = INVALID_HANDLE;
