@@ -2,7 +2,7 @@
 #include <sdktools>
 
 #define CONFIG "configs/end-of-round-sprites.cfg"
-#define VERSION "0.1.1"
+#define VERSION "0.1.2"
 
 new bool:g_bRoundEnded = false;
 new Handle:g_hSprites = INVALID_HANDLE;
@@ -36,24 +36,25 @@ public OnPluginStart()
 
 public OnMapStart()
 {
-	KvGotoFirstSubKey(g_hSprites);
-	
-	do
+	if (KvGotoFirstSubKey(g_hSprites))
 	{
-		decl String:sSprite[PLATFORM_MAX_PATH];
-		KvGetString(g_hSprites, "sprite", sSprite, sizeof(sSprite), "");
-		
-		decl String:sSpriteMaterial[PLATFORM_MAX_PATH];
-		FormatEx(sSpriteMaterial, sizeof(sSpriteMaterial), "%s.vmt", sSprite);
-		PrecacheGeneric(sSpriteMaterial, true);
-		AddFileToDownloadsTable(sSpriteMaterial);
-		
-		decl String:sSpriteTexture[PLATFORM_MAX_PATH];
-		FormatEx(sSpriteTexture, sizeof(sSpriteTexture), "%s.vtf", sSprite);
-		PrecacheGeneric(sSpriteTexture, true);
-		AddFileToDownloadsTable(sSpriteTexture);
+		do
+		{
+			decl String:sSprite[PLATFORM_MAX_PATH];
+			KvGetString(g_hSprites, "sprite", sSprite, sizeof(sSprite), "");
+			
+			decl String:sSpriteMaterial[PLATFORM_MAX_PATH];
+			FormatEx(sSpriteMaterial, sizeof(sSpriteMaterial), "%s.vmt", sSprite);
+			PrecacheGeneric(sSpriteMaterial, true);
+			AddFileToDownloadsTable(sSpriteMaterial);
+			
+			decl String:sSpriteTexture[PLATFORM_MAX_PATH];
+			FormatEx(sSpriteTexture, sizeof(sSpriteTexture), "%s.vtf", sSprite);
+			PrecacheGeneric(sSpriteTexture, true);
+			AddFileToDownloadsTable(sSpriteTexture);
+		}
+		while (KvGotoNextKey(g_hSprites));
 	}
-	while (KvGotoNextKey(g_hSprites));
 	
 	KvRewind(g_hSprites);
 }
@@ -71,33 +72,34 @@ public OnRoundStart(Handle:event, const String:name[], bool:dontBroadcast)
 
 public OnRoundEnd(Handle:event, const String:name[], bool:dontBroadcast)
 {
-	KvGotoFirstSubKey(g_hSprites);
-	
-	do
+	if (KvGotoFirstSubKey(g_hSprites))
 	{
-		decl String:sOverride[255];
-		KvGetString(g_hSprites, "override", sOverride, sizeof(sOverride), "");
-		decl String:sFlags[27];
-		KvGetString(g_hSprites, "flags", sFlags, sizeof(sFlags), "");
-		decl String:sSprite[PLATFORM_MAX_PATH];
-		KvGetString(g_hSprites, "sprite", sSprite, sizeof(sSprite), "");
-		
-		for (new i = 1; i <= MaxClients; i++)
+		do
 		{
-			if (g_SpriteEntities[i] > 0 && IsValidEntity(g_SpriteEntities[i]))
-			{
-				continue;
-			}
+			decl String:sOverride[255];
+			KvGetString(g_hSprites, "override", sOverride, sizeof(sOverride), "");
+			decl String:sFlags[27];
+			KvGetString(g_hSprites, "flags", sFlags, sizeof(sFlags), "");
+			decl String:sSprite[PLATFORM_MAX_PATH];
+			KvGetString(g_hSprites, "sprite", sSprite, sizeof(sSprite), "");
 			
-			if (CheckCommandAccess(i, sOverride, ReadFlagString(sFlags), true))
+			for (new i = 1; i <= MaxClients; i++)
 			{
-				decl String:sSpriteMaterial[PLATFORM_MAX_PATH];
-				FormatEx(sSpriteMaterial, sizeof(sSpriteMaterial), "%s.vmt", sSprite);
-				CreateSprite(i, sSpriteMaterial);
-			}
-		}	
+				if (g_SpriteEntities[i] > 0 && IsValidEntity(g_SpriteEntities[i]))
+				{
+					continue;
+				}
+				
+				if (CheckCommandAccess(i, sOverride, ReadFlagString(sFlags), true))
+				{
+					decl String:sSpriteMaterial[PLATFORM_MAX_PATH];
+					FormatEx(sSpriteMaterial, sizeof(sSpriteMaterial), "%s.vmt", sSprite);
+					CreateSprite(i, sSpriteMaterial);
+				}
+			}	
+		}
+		while (KvGotoNextKey(g_hSprites));
 	}
-	while (KvGotoNextKey(g_hSprites));
 	
 	KvRewind(g_hSprites);
 	g_bRoundEnded = true;
@@ -115,6 +117,8 @@ public Action:OnPlayerDeath(Handle:event, const String:name[], bool:dontBroadcas
 
 LoadSpriteConfig()
 {
+	decl String:sConfigPath[PLATFORM_MAX_PATH];
+	BuildPath(Path_SM, sConfigPath, sizeof(sConfigPath), CONFIG);
 	FileToKeyValues(g_hSprites, CONFIG);
 }
 
