@@ -2,7 +2,7 @@
 #include <sdktools>
 
 #define CONFIG "configs/end-of-round-sprites.cfg"
-#define VERSION "0.1.4"
+#define VERSION "0.1.5"
 
 new bool:g_bRoundEnded = false;
 new Handle:g_hSprites = INVALID_HANDLE;
@@ -30,6 +30,11 @@ public OnPluginStart()
 	
 	g_hSprites = CreateKeyValues("Sprites");
 	LoadSpriteConfig();
+	
+	for (new i = 1; i <= MAXPLAYERS; i++)
+	{
+		g_SpriteEntities[i] = INVALID_ENT_REFERENCE;
+	}
 	
 	g_VelocityOffset = FindSendPropInfo("CBasePlayer", "m_vecVelocity[0]");
 }
@@ -87,7 +92,7 @@ public OnRoundEnd(Handle:event, const String:name[], bool:dontBroadcast)
 			
 			for (new i = 1; i <= MaxClients; i++)
 			{
-				if (g_SpriteEntities[i] > 0 && IsValidEntity(g_SpriteEntities[i]))
+				if (g_SpriteEntities[i] != INVALID_ENT_REFERENCE && IsValidEntity(g_SpriteEntities[i]))
 				{
 					KillSprite(i);
 				}
@@ -104,6 +109,7 @@ public OnRoundEnd(Handle:event, const String:name[], bool:dontBroadcast)
 	}
 	
 	KvRewind(g_hSprites);
+	
 	g_bRoundEnded = true;
 }
 
@@ -148,16 +154,16 @@ CreateSprite(iClient, String:sSprite[])
 		
 		TeleportEntity(ent, vOrigin, NULL_VECTOR, NULL_VECTOR);
 
-		g_SpriteEntities[iClient] = ent;
+		g_SpriteEntities[iClient] = EntIndexToEntRef(ent);
 	}
 }
 
 KillSprite(iClient)
 {
-	if (g_SpriteEntities[iClient] > 0 && IsValidEntity(g_SpriteEntities[iClient]))
+	if (g_SpriteEntities[iClient] != INVALID_ENT_REFERENCE && IsValidEntity(g_SpriteEntities[iClient]))
 	{
 		AcceptEntityInput(g_SpriteEntities[iClient], "kill");
-		g_SpriteEntities[iClient] = 0;
+		g_SpriteEntities[iClient] = INVALID_ENT_REFERENCE;
 	}
 }
 
@@ -169,28 +175,18 @@ public OnGameFrame()
 		
 		for (new i = 1; i <= MaxClients; i++)
 		{
-			if (IsClientInGame(i))
+			if (IsClientInGame(i) && g_SpriteEntities[i] != INVALID_ENT_REFERENCE && IsValidEntity(g_SpriteEntities[i]))
 			{
-				if (g_SpriteEntities[i] > 0)
-				{
-					ent = g_SpriteEntities[i];
-					
-					if (!IsValidEntity(ent))
-					{
-						g_SpriteEntities[i] = 0;
-					}
-					else
-					{
-						if (EntRefToEntIndex(ent) > 0)
-						{
-							ent = EntRefToEntIndex(ent);
-							GetClientEyePosition(i, vOrigin);
-							vOrigin[2] += 25.0;
-							GetEntDataVector(i, g_VelocityOffset, vVelocity);
-							TeleportEntity(ent, vOrigin, NULL_VECTOR, vVelocity);
-						}
-					}
-				}
+				ent = g_SpriteEntities[i];
+				
+				GetClientEyePosition(i, vOrigin);
+				vOrigin[2] += 25.0;
+				GetEntDataVector(i, g_VelocityOffset, vVelocity);
+				TeleportEntity(ent, vOrigin, NULL_VECTOR, vVelocity);
+			}
+			else
+			{
+				g_SpriteEntities[i] = INVALID_ENT_REFERENCE;
 			}
 		}
 	}
