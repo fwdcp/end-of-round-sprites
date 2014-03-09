@@ -2,7 +2,7 @@
 #include <sdktools>
 
 #define CONFIG "configs/end-of-round-sprites.cfg"
-#define VERSION "0.1.3"
+#define VERSION "0.1.4"
 
 new bool:g_bRoundEnded = false;
 new Handle:g_hSprites = INVALID_HANDLE;
@@ -63,8 +63,10 @@ public OnRoundStart(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	for (new i = 1; i <= MaxClients; i++)
 	{
-		if (!IsClientInGame(i)) continue;
-		KillSprite(i);
+		if (IsClientInGame(i))
+		{
+			KillSprite(i);
+		}
 	}
 	
 	g_bRoundEnded = false;
@@ -87,7 +89,7 @@ public OnRoundEnd(Handle:event, const String:name[], bool:dontBroadcast)
 			{
 				if (g_SpriteEntities[i] > 0 && IsValidEntity(g_SpriteEntities[i]))
 				{
-					continue;
+					KillSprite(i);
 				}
 				
 				if (CheckCommandAccess(i, sOverride, ReadFlagString(sFlags), true))
@@ -161,29 +163,33 @@ KillSprite(iClient)
 
 public OnGameFrame()
 {
-	if (!g_bRoundEnded) return;
-	new ent, Float:vOrigin[3], Float:vVelocity[3];
-	
-	for(new i = 1; i <= MaxClients; i++)
+	if (g_bRoundEnded)
 	{
-		if (!IsClientInGame(i)) {
-			continue;
-		}
+		new ent, Float:vOrigin[3], Float:vVelocity[3];
 		
-		if ((ent = g_SpriteEntities[i]) > 0)
+		for (new i = 1; i <= MaxClients; i++)
 		{
-			if (!IsValidEntity(ent))
+			if (IsClientInGame(i))
 			{
-				g_SpriteEntities[i] = 0;
-			}
-			else
-			{
-				if ((ent = EntRefToEntIndex(ent)) > 0)
+				if (g_SpriteEntities[i] > 0)
 				{
-					GetClientEyePosition(i, vOrigin);
-					vOrigin[2] += 25.0;
-					GetEntDataVector(i, g_VelocityOffset, vVelocity);
-					TeleportEntity(ent, vOrigin, NULL_VECTOR, vVelocity);
+					ent = g_SpriteEntities[i];
+					
+					if (!IsValidEntity(ent))
+					{
+						g_SpriteEntities[i] = 0;
+					}
+					else
+					{
+						if (EntRefToEntIndex(ent) > 0)
+						{
+							ent = EntRefToEntIndex(ent);
+							GetClientEyePosition(i, vOrigin);
+							vOrigin[2] += 25.0;
+							GetEntDataVector(i, g_VelocityOffset, vVelocity);
+							TeleportEntity(ent, vOrigin, NULL_VECTOR, vVelocity);
+						}
+					}
 				}
 			}
 		}
