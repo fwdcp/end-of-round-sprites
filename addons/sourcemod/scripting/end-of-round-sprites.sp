@@ -2,7 +2,7 @@
 #include <sdktools>
 
 #define CONFIG "configs/end-of-round-sprites.cfg"
-#define VERSION "0.1.2"
+#define VERSION "0.1.3"
 
 new bool:g_bRoundEnded = false;
 new Handle:g_hSprites = INVALID_HANDLE;
@@ -119,7 +119,7 @@ LoadSpriteConfig()
 {
 	decl String:sConfigPath[PLATFORM_MAX_PATH];
 	BuildPath(Path_SM, sConfigPath, sizeof(sConfigPath), CONFIG);
-	FileToKeyValues(g_hSprites, CONFIG);
+	FileToKeyValues(g_hSprites, sConfigPath);
 }
 
 CreateSprite(iClient, String:sSprite[])
